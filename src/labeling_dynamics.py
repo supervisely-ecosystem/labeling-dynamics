@@ -1,5 +1,6 @@
 import os
 from dateutil import parser
+import datetime
 import pandas as pd
 import json
 
@@ -10,9 +11,11 @@ my_app = sly.AppService()
 
 TEAM_ID = int(os.environ['context.teamId'])
 TEAM_ACTIVITY = None
-
+DEFAULT_ALL_TIME = None
 
 def calc_stats(api, task_id, activity_df):
+    global DEFAULT_ALL_TIME
+
     actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
     actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
     actions_count.reset_index(inplace=True)
@@ -46,22 +49,31 @@ def calc_stats(api, task_id, activity_df):
 
     start_period = activity_df["date"].min()
     # print("---\n", start_period)
-    #
+
     end_period = activity_df["date"].max()
     # print("---\n", end_period)
 
     def _pd_to_sly_table(pd):
         return json.loads(pd.to_json(orient='split'))
 
-    fields = [
+    fields = []
+
+    if DEFAULT_ALL_TIME is None:
+        # initialize widget state only on start
+        DEFAULT_ALL_TIME = [
+            start_period.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            end_period.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        ]
+        fields.append({"field": "state.dtRange", "payload": DEFAULT_ALL_TIME})
+        fields.append({"field": "data.allTimeRange", "payload": DEFAULT_ALL_TIME})
+
+    fields.extend([
         {"field": "data.actionsCount", "payload": _pd_to_sly_table(actions_count)},
         {"field": "data.userTotalActions", "payload": _pd_to_sly_table(user_total_actions)},
         {"field": "data.userActionCount", "payload": _pd_to_sly_table(user_action_count)},
         {"field": "data.ljActionCount", "payload": _pd_to_sly_table(lj_actions_count)},
         {"field": "data.userLjActionCount", "payload": _pd_to_sly_table(user_lj_actions_count)},
-        {"field": "state.dtRange", "payload": [start_period.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-                                               end_period.strftime('%Y-%m-%dT%H:%M:%S.000Z')]},
-    ]
+    ])
     api.task.set_fields(task_id, fields)
 
 @my_app.callback("preprocessing")
@@ -89,12 +101,19 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
 @my_app.callback("apply_filter")
 @sly.timeit
 def apply_filter(api: sly.Api, task_id, context, state, app_logger):
-    x = 10
     dt_range = state["dtRange"]
-    begin = parser.parse(dt_range[0])
-    end = parser.parse(dt_range[1])
-    filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] > begin) & (TEAM_ACTIVITY['date'] < end)]
+    if dt_range[0] is None or dt_range[1] is None:
+        app_logger.warn("DateTime range is not defined")
+        return
+    begin = parser.parse(dt_range[0]) - datetime.timedelta(seconds=1)
+    end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
+    filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] >= begin) & (TEAM_ACTIVITY['date'] <= end)]
     calc_stats(api, task_id, filtered)
+
+@my_app.callback("stop")
+@sly.timeit
+def stop(api: sly.Api, task_id, context, state, app_logger):
+    api.task.set_field(task_id, "data.stopped", True)
 
 def main():
     sly.logger.info("Input params", extra={"teamId": TEAM_ID})
@@ -104,6 +123,8 @@ def main():
         "userActionCount": {"columns": [], "data": []},
         "ljActionCount": {"columns": [], "data": []},
         "userLjActionCount": {"columns": [], "data": []},
+        "allTimeRange": None,
+        "stopped": False
     }
 
     state={
@@ -116,5 +137,6 @@ def main():
 
 
 #@TODO: define labeling actions in readme
+#@TODO: disable button on stop
 if __name__ == "__main__":
     sly.main_wrapper("main", main)

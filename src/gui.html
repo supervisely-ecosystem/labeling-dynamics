@@ -1,38 +1,84 @@
 <div>
     <div>
-        <el-date-picker v-model="state.dtRange" type="datetimerange" placeholder="Select time range filter"
-                        :picker-options="data.dtOptions">
-
-        </el-date-picker>
-        <el-button style="margin-left: 15px" type="primary" @click="command('apply_filter')">
+        <el-date-picker
+                v-model="state.dtRange"
+                type="datetimerange"
+                placeholder="Select time range filter"
+                :clearable="false"
+                :picker-options="{ shortcuts: [{
+                                    text: 'All time',
+                                    onClick(picker) { picker.$emit('pick', data.allTimeRange); }
+                                   }]
+                                 }"
+        ></el-date-picker>
+        <el-button
+                style="margin-left: 15px"
+                type="primary"
+                @click="command('apply_filter')"
+                :disabled="data.stopped || state.dtRange[0] === null || state.dtRange[1] === null">
             <i class="zmdi zmdi-calendar-alt" style="margin-right: 5px;"></i> Apply filter
         </el-button>
+        <span
+                v-if="state.dtRange[0] === null || state.dtRange[1] === null"
+                style="color:red; margin-left: 10px;"
+        >
+            Please, define date-time range to apply filter
+        </span>
     </div>
 
-    <sly-card class="mt15" title="Labeling actions"
-              subtitle="Count number of events for every labeling action (Figure: Create / Update / Delete / Restore;
+
+    <sly-card
+            class="mt15"
+            title="Labeling actions"
+            subtitle="Count number of events for every labeling action (Figure: Create / Update / Delete / Restore;
               Tag: Attach / Update / Detach; Image Review Status). If some actions don't have events (0 events)
               then such actions are not presented in the table">
-        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.actionsCount"></sly-table>
+        <sly-table
+                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                :content="data.actionsCount"
+        ></sly-table>
     </sly-card>
 
-    <sly-card class="mt15" title="Labeling events count"
-              subtitle="How many labeling events every user performed">
-        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.userTotalActions"></sly-table>
+    <sly-card
+            class="mt15"
+            title="Labeling events count"
+            subtitle="How many labeling events every user performed">
+        <sly-table
+                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                :content="data.userTotalActions"
+        ></sly-table>
     </sly-card>
 
-    <sly-card class="mt15" title="User - Action - Events Count"
-              subtitle="Events count for every labeling action for every user">
-        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.userActionCount"></sly-table>
+    <sly-card
+            class="mt15"
+            title="User - Action - Events Count"
+            subtitle="Events count for every labeling action for every user"
+    >
+        <sly-table
+                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                :content="data.userActionCount"
+        ></sly-table>
     </sly-card>
 
-    <sly-card class="mt15" title="Labeling Job - Action - Events Count"
-              subtitle="Events count for every labeling action for every labeling job">
-        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.ljActionCount"></sly-table>
+    <sly-card
+            class="mt15"
+            title="Labeling Job - Action - Events Count"
+            subtitle="Events count for every labeling action for every labeling job"
+    >
+        <sly-table
+                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                :content="data.ljActionCount"
+        ></sly-table>
     </sly-card>
 
-    <sly-card class="mt15" title="User - Labeling Job - Action - Events Count"
-              subtitle="Events count for every labeling action for every labeling job">
-        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.userLjActionCount"></sly-table>
+    <sly-card
+            class="mt15"
+            title="User - Labeling Job - Action - Events Count"
+            subtitle="Events count for every labeling action for every labeling job"
+    >
+        <sly-table
+                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                :content="data.userLjActionCount"
+        ></sly-table>
     </sly-card>
 </div>
