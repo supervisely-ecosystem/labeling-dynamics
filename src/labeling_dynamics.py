@@ -96,6 +96,9 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     TEAM_ACTIVITY = pd.DataFrame(activity_json)
     TEAM_ACTIVITY['date'] = pd.to_datetime(TEAM_ACTIVITY['date'])
 
+    before_images = {}
+    after_images = TEAM_ACTIVITY["imageId"].unique()
+
     calc_stats(api, task_id, TEAM_ACTIVITY)
 
 @my_app.callback("apply_filter")
