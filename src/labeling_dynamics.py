@@ -23,13 +23,30 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         aa.ATTACH_TAG,
         aa.UPDATE_TAG_VALUE,
         aa.DETACH_TAG,
+        aa.IMAGE_REVIEW_STATUS_UPDATED
     ]
     activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
     activity_df = pd.DataFrame(activity_json)
 
-    all_actions_count = activity_df.groupby("action")["action"].count()
+    activity_df['date_time'] = pd.to_datetime(activity_df['date'])
 
-    actions_count = activity_df.groupby("action")["action"].count()
+    all_actions_count = activity_df.groupby("action")["action"].count()
+    print("---\n", all_actions_count)
+
+    user_actions_count = activity_df.groupby(["user", "action"])["action"].count()
+    print("---\n", user_actions_count)
+
+    lj_actions_count = activity_df.groupby(["job", "action"])["action"].count()
+    print("---\n", lj_actions_count)
+
+    start_period = activity_df["date_time"].min()
+    print("---\n", start_period)
+
+    end_period = activity_df["date_time"].max()
+    print("---\n", end_period)
+
+    
+
 
 
 def main():
