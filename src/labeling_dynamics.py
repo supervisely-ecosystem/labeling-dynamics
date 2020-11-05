@@ -28,16 +28,51 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
     activity_df = pd.DataFrame(activity_json)
 
-    activity_df['date_time'] = pd.to_datetime(activity_df['date'])
+    all_actions_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
+    all_actions_count = all_actions_count.sort_values(["user", "count"], ignore_index=True, ascending=(True, False))
 
-    all_actions_count = activity_df.groupby("action")["action"].count()
+
+    all_actions_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
+    # all_actions_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count').sort_values(['count'], ascending=False)
+
+    print(all_actions_count)
+
+    # sort by date?
+    activity_df['date'] = pd.to_datetime(activity_df['date'])
+
+    all_actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
+    all_actions_count = all_actions_count.sort_values("count", ascending=False)
     print("---\n", all_actions_count)
 
-    user_actions_count = activity_df.groupby(["user", "action"])["action"].count()
+    user_actions = activity_df.groupby(["user", "action"])
+    for x in user_actions.groups:
+        cur_user = ""
+        cur_user_actions = user_actions.get_group(x)
+        print(cur_user_actions)
+
+
+    user_actions_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
+
+    user_actions_count = activity_df.groupby(["user", "action"]).agg({'action': sum})
+    g = user_actions_count['count'].groupby('user', group_keys=False)
+    res = g.apply(lambda x: x.sort_values(ascending=False))
+
+    user_actions_count = activity_df.groupby(["user", "action"])
+    for x in user_actions_count.groups:
+        cur_user = ""
+        cur_user_actions = user_actions_count.get_group(x)
+
+    user_actions_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
+    user_actions_count = user_actions_count.sort_values("count", ascending=False)
     print("---\n", user_actions_count)
 
-    lj_actions_count = activity_df.groupby(["job", "action"])["action"].count()
+    lj_actions_count = activity_df.groupby(["job", "action"])["action"].count().reset_index(name='count')
+    lj_actions_count = lj_actions_count.sort_values("count", ascending=False)
     print("---\n", lj_actions_count)
+
+    user_lj_actions_count = activity_df.groupby(["user", "job", "action"])["action"].count().reset_index(name='count')
+    user_lj_actions_count = lj_actions_count.sort_values("count", ascending=False)
+    print("---\n", user_lj_actions_count)
 
     start_period = activity_df["date_time"].min()
     print("---\n", start_period)
@@ -45,10 +80,8 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     end_period = activity_df["date_time"].max()
     print("---\n", end_period)
 
-    
-
-
-
+# tag <pre></pre> скрол?? через div overflow-hidden fix width, height
+# pandas - print all columns
 def main():
     sly.logger.info("Input params", extra={"teamId": TEAM_ID})
     data = {
