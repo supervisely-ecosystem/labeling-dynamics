@@ -3,6 +3,7 @@ from dateutil import parser
 import datetime
 import pandas as pd
 import json
+from collections import defaultdict
 
 import supervisely_lib as sly
 from supervisely_lib.api.team_api import ActivityAction as aa
@@ -16,14 +17,16 @@ DEFAULT_ALL_TIME = None
 def calc_stats(api, task_id, activity_df, before_activity):
     global DEFAULT_ALL_TIME
 
+    used_ids = set(before_activity['imageId'].unique().tolist())
+
+    #user-uniq-images
+    user_images_counter = defaultdict(int)
     data_after = json.loads(activity_df.to_json(orient='records'))
     for obj in data_after:
-        print(pd.Timestamp.to_pydatetime(obj['date']))
-        #print(datetime.datetime.fromtimestamp(obj['date']))
-
-
-    before_images = {}
-    after_images = TEAM_ACTIVITY["imageId"].unique()
+        print(obj['index'])
+        if obj['imageId'] not in used_ids:
+            used_ids.add(obj['imageId'])
+            user_images_counter[obj['user']] += 1
 
     actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
     actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
