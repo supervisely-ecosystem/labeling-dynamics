@@ -1,6 +1,17 @@
 <div>
+    <div>
+        <el-date-picker v-model="state.dtRange" type="datetimerange" placeholder="Select time range filter"
+                        :picker-options="data.dtOptions">
+
+        </el-date-picker>
+        <el-button style="margin-left: 15px" type="primary" @click="command('apply_filter')">
+            <i class="zmdi zmdi-calendar-alt" style="margin-right: 5px;"></i> Apply filter
+        </el-button>
+    </div>
+
     <sly-card class="mt15" title="Labeling actions"
-              subtitle="Count number of events for every labeling action. If some actions don't have events (0 events)
+              subtitle="Count number of events for every labeling action (Figure: Create / Update / Delete / Restore;
+              Tag: Attach / Update / Detach; Image Review Status). If some actions don't have events (0 events)
               then such actions are not presented in the table">
         <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.actionsCount"></sly-table>
     </sly-card>

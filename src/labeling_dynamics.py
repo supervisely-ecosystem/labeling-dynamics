@@ -44,10 +44,10 @@ def calc_stats(api, task_id, activity_df):
     user_lj_actions_count.rename(columns={'index': '#'}, inplace=True)
     # print("---\n", user_lj_actions_count)
 
-    # start_period = activity_df["date"].min()
+    start_period = activity_df["date"].min()
     # print("---\n", start_period)
     #
-    # end_period = activity_df["date"].max()
+    end_period = activity_df["date"].max()
     # print("---\n", end_period)
 
     def _pd_to_sly_table(pd):
@@ -59,6 +59,8 @@ def calc_stats(api, task_id, activity_df):
         {"field": "data.userActionCount", "payload": _pd_to_sly_table(user_action_count)},
         {"field": "data.ljActionCount", "payload": _pd_to_sly_table(lj_actions_count)},
         {"field": "data.userLjActionCount", "payload": _pd_to_sly_table(user_lj_actions_count)},
+        {"field": "state.dtRange", "payload": [start_period.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+                                               end_period.strftime('%Y-%m-%dT%H:%M:%S.000Z')]},
     ]
     api.task.set_fields(task_id, fields)
 
@@ -84,6 +86,15 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
 
     calc_stats(api, task_id, TEAM_ACTIVITY)
 
+@my_app.callback("apply_filter")
+@sly.timeit
+def apply_filter(api: sly.Api, task_id, context, state, app_logger):
+    x = 10
+    dt_range = state["dtRange"]
+    begin = parser.parse(dt_range[0])
+    end = parser.parse(dt_range[1])
+    filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] > begin) & (TEAM_ACTIVITY['date'] < end)]
+    calc_stats(api, task_id, filtered)
 
 def main():
     sly.logger.info("Input params", extra={"teamId": TEAM_ID})
@@ -94,10 +105,14 @@ def main():
         "ljActionCount": {"columns": [], "data": []},
         "userLjActionCount": {"columns": [], "data": []},
     }
+
+    state={
+        "dtRange": None
+    }
     initial_events = [{"state": None, "context": None, "command": "preprocessing"}]
 
     # Run application service
-    my_app.run(data=data, initial_events=initial_events)
+    my_app.run(data=data, state=state, initial_events=initial_events)
 
 
 #@TODO: define labeling actions in readme
