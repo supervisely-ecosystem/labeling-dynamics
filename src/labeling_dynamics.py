@@ -13,8 +13,17 @@ TEAM_ID = int(os.environ['context.teamId'])
 TEAM_ACTIVITY = None
 DEFAULT_ALL_TIME = None
 
-def calc_stats(api, task_id, activity_df):
+def calc_stats(api, task_id, activity_df, before_activity):
     global DEFAULT_ALL_TIME
+
+    data_after = json.loads(activity_df.to_json(orient='records'))
+    for obj in data_after:
+        print(pd.Timestamp.to_pydatetime(obj['date']))
+        #print(datetime.datetime.fromtimestamp(obj['date']))
+
+
+    before_images = {}
+    after_images = TEAM_ACTIVITY["imageId"].unique()
 
     actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
     actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
@@ -95,11 +104,11 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
     TEAM_ACTIVITY = pd.DataFrame(activity_json)
     TEAM_ACTIVITY['date'] = pd.to_datetime(TEAM_ACTIVITY['date'])
+    TEAM_ACTIVITY = TEAM_ACTIVITY.sort_values("date", ascending=True)
+    TEAM_ACTIVITY.reset_index(inplace=True)
 
-    before_images = {}
-    after_images = TEAM_ACTIVITY["imageId"].unique()
-
-    calc_stats(api, task_id, TEAM_ACTIVITY)
+    empty_df = pd.DataFrame(data=None, columns=TEAM_ACTIVITY.columns)
+    calc_stats(api, task_id, TEAM_ACTIVITY, empty_df)
 
 @my_app.callback("apply_filter")
 @sly.timeit
@@ -111,7 +120,8 @@ def apply_filter(api: sly.Api, task_id, context, state, app_logger):
     begin = parser.parse(dt_range[0]) - datetime.timedelta(seconds=1)
     end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
     filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] >= begin) & (TEAM_ACTIVITY['date'] <= end)]
-    calc_stats(api, task_id, filtered)
+    before_activity = TEAM_ACTIVITY[TEAM_ACTIVITY['date'] < begin]
+    calc_stats(api, task_id, filtered, before_activity)
 
 @my_app.callback("stop")
 @sly.timeit
