@@ -1,21 +1,27 @@
 <div>
-    <el-row :gutter="20" type="flex">
-        <el-col :span="8">
-            <sly-card title="Input">
-                <sly-field title="" description="Team Member">
-                    <a slot="title">
-                        {{data.memberLogin}}
-                    </a>
-                    <sly-icon slot="icon" :options="{ color: '#33c94c', bgColor: '#d9f7e4', rounded: false }">
-                        <i class="zmdi zmdi-account"></i>
-                    </sly-icon>
-                </sly-field>
-            </sly-card>
-        </el-col>
-    </el-row>
-    <sly-card class="mt15" title="Labeling jobs"
-              subtitle="All jobs assigned to selected user. First Time True (FTT) = ACCEPTED / LABELED">
-        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.jobsTable"></sly-table>
-        <div class="mt15" style="color: blue"> Avg FTT (for non-zero values): {{data.avgFtt}}</div>
+    <sly-card class="mt15" title="Labeling actions"
+              subtitle="Count number of events for every labeling action. If some actions don't have events (0 events)
+              then such actions are not presented in the table">
+        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.actionsCount"></sly-table>
+    </sly-card>
+
+    <sly-card class="mt15" title="Labeling events count"
+              subtitle="How many labeling events every user performed">
+        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.userTotalActions"></sly-table>
+    </sly-card>
+
+    <sly-card class="mt15" title="User - Action - Events Count"
+              subtitle="Events count for every labeling action for every user">
+        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.userActionCount"></sly-table>
+    </sly-card>
+
+    <sly-card class="mt15" title="Labeling Job - Action - Events Count"
+              subtitle="Events count for every labeling action for every labeling job">
+        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.ljActionCount"></sly-table>
+    </sly-card>
+
+    <sly-card class="mt15" title="User - Labeling Job - Action - Events Count"
+              subtitle="Events count for every labeling action for every labeling job">
+        <sly-table :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}" :content="data.userLjActionCount"></sly-table>
     </sly-card>
 </div>

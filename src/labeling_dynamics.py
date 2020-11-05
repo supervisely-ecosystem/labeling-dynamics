@@ -1,6 +1,7 @@
 import os
 from dateutil import parser
 import pandas as pd
+import json
 
 import supervisely_lib as sly
 from supervisely_lib.api.team_api import ActivityAction as aa
@@ -10,9 +11,61 @@ my_app = sly.AppService()
 TEAM_ID = int(os.environ['context.teamId'])
 TEAM_ACTIVITY = None
 
+
+def calc_stats(api, task_id, activity_df):
+    actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
+    actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
+    actions_count.reset_index(inplace=True)
+    actions_count.rename(columns = {'index':'#'}, inplace=True)
+    #actions_count = actions_count.append(actions_count.sum(numeric_only=True), ignore_index=True)
+    # print("---\n", actions_count)
+
+    user_total_actions = activity_df.groupby("user")["user"].count().reset_index(name='count')
+    user_total_actions = user_total_actions.sort_values("count", ascending=False)
+    user_total_actions.reset_index(inplace=True)
+    user_total_actions.rename(columns={'index': '#'}, inplace=True)
+    # print("---\n", user_total_actions)
+
+    user_action_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
+    user_action_count = user_action_count.sort_values(["user", "count"], ignore_index=True, ascending=(True, False))
+    user_action_count.reset_index(inplace=True)
+    user_action_count.rename(columns={'index': '#'}, inplace=True)
+    # print("---\n", user_action_count)
+
+    lj_actions_count = activity_df.groupby(["job", "action"])["action"].count().reset_index(name='count')
+    lj_actions_count = lj_actions_count.sort_values(["job", "count"], ignore_index=True, ascending=(True, False))
+    lj_actions_count.reset_index(inplace=True)
+    lj_actions_count.rename(columns={'index': '#'}, inplace=True)
+    # print("---\n", lj_actions_count)
+
+    user_lj_actions_count = activity_df.groupby(["user", "job", "action"])["action"].count().reset_index(name='count')
+    user_lj_actions_count = user_lj_actions_count.sort_values(["user", "job", "count"], ascending=(True, True, False))
+    user_lj_actions_count.reset_index(inplace=True)
+    user_lj_actions_count.rename(columns={'index': '#'}, inplace=True)
+    # print("---\n", user_lj_actions_count)
+
+    # start_period = activity_df["date"].min()
+    # print("---\n", start_period)
+    #
+    # end_period = activity_df["date"].max()
+    # print("---\n", end_period)
+
+    def _pd_to_sly_table(pd):
+        return json.loads(pd.to_json(orient='split'))
+
+    fields = [
+        {"field": "data.actionsCount", "payload": _pd_to_sly_table(actions_count)},
+        {"field": "data.userTotalActions", "payload": _pd_to_sly_table(user_total_actions)},
+        {"field": "data.userActionCount", "payload": _pd_to_sly_table(user_action_count)},
+        {"field": "data.ljActionCount", "payload": _pd_to_sly_table(lj_actions_count)},
+        {"field": "data.userLjActionCount", "payload": _pd_to_sly_table(user_lj_actions_count)},
+    ]
+    api.task.set_fields(task_id, fields)
+
 @my_app.callback("preprocessing")
 @sly.timeit
 def preprocessing(api: sly.Api, task_id, context, state, app_logger):
+    global TEAM_ACTIVITY
     team = api.team.get_info_by_id(TEAM_ID)
 
     labeling_actions = [
@@ -26,45 +79,20 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         aa.IMAGE_REVIEW_STATUS_UPDATED
     ]
     activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
-    activity_df = pd.DataFrame(activity_json)
+    TEAM_ACTIVITY = pd.DataFrame(activity_json)
+    TEAM_ACTIVITY['date'] = pd.to_datetime(TEAM_ACTIVITY['date'])
 
-    # sort by date?
-    activity_df['date'] = pd.to_datetime(activity_df['date'])
+    calc_stats(api, task_id, TEAM_ACTIVITY)
 
-    all_actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
-    all_actions_count = all_actions_count.sort_values("count", ascending=False)
-    print("---\n", all_actions_count)
-
-    user_total_actions = activity_df.groupby("user")["user"].count().reset_index(name='count')
-    user_total_actions = user_total_actions.sort_values("count", ascending=False)
-    print("---\n", user_total_actions)
-
-    user_action_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
-    user_action_count = user_action_count.sort_values(["user", "count"], ignore_index=True, ascending=(True, False))
-    print("---\n", user_action_count)
-
-    lj_actions_count = activity_df.groupby(["job", "action"])["action"].count().reset_index(name='count')
-    lj_actions_count = lj_actions_count.sort_values(["job", "count"], ignore_index=True, ascending=(True, False))
-    print("---\n", lj_actions_count)
-
-    user_lj_actions_count = activity_df.groupby(["user", "job", "action"])["action"].count().reset_index(name='count')
-    user_lj_actions_count = user_lj_actions_count.sort_values(["user", "job", "count"], ascending=(True, True, False))
-    print("---\n", user_lj_actions_count)
-
-    start_period = activity_df["date_time"].min()
-    print("---\n", start_period)
-
-    end_period = activity_df["date_time"].max()
-    print("---\n", end_period)
-
-# tag <pre></pre> скрол?? через div overflow-hidden fix width, height
-# pandas to sly-table
 
 def main():
     sly.logger.info("Input params", extra={"teamId": TEAM_ID})
     data = {
-        "jobsTable": {"columns": [], "data": []},
-        "avgFtt": "in progress"
+        "actionsCount": {"columns": [], "data": []},
+        "userTotalActions": {"columns": [], "data": []},
+        "userActionCount": {"columns": [], "data": []},
+        "ljActionCount": {"columns": [], "data": []},
+        "userLjActionCount": {"columns": [], "data": []},
     }
     initial_events = [{"state": None, "context": None, "command": "preprocessing"}]
 
@@ -72,5 +100,6 @@ def main():
     my_app.run(data=data, initial_events=initial_events)
 
 
+#@TODO: define labeling actions in readme
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
