@@ -60,4 +60,4 @@ Press `App settings` -> `Stop` button right in application session or in app ses
 
 To see history of runs go to `Apps` page, click to applications sessions. In front of every session you can see buttons (`View` and `Logs`). Press `View` button to open stopped application session in `Read Only` mode.
 
-<img src="https://i.imgur.com/T4tgaJV.png"/>
+<img src="https://i.imgur.com/EVaMydM.png"/>
