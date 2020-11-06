@@ -54,7 +54,15 @@ By default app shows maximum time interval that covers all labeling events in a 
 
 ## Step 4. Stop app
 
-Press `App settings` -> `Stop` button right in application session or in app sessions table.
+Press `App settings` -> `Stop` button right in application session
+
+<img src="https://i.imgur.com/00d29VG.png"/>
+
+
+or in app sessions table.
+
+<img src="https://i.imgur.com/o6ZsNPX.png"/>
+
 
 ## History of runs
 
