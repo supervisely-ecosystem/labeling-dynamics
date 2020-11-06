@@ -21,7 +21,7 @@
 
 ## Overview
 
-Supervisely stores full activity log almost for every action. This app uses log to restore all labeeling actions in team (table can be huge) and performs some basic aggregations shown on the screenshot below. The following types of events are considered as labeling actions:
+Supervisely stores full activity log almost for every action. This app uses activity log to restore all labeeling actions in team (table can be huge) and performs some basic aggregations shown on the screenshot below. The following types of events are considered as labeling actions:
 
 - `CREATE_FIGURE`
 - `UPDATE_FIGURE`
