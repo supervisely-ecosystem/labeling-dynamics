@@ -38,7 +38,7 @@ Following metrics are available (every metric is calculated for the selected dat
 - number of labeling events that every user performed
 - number of events for every user for every action. If you sort this table by user you will see labeling actions for every user. If you will sort this table by labeling actions, then you can compare users within every action
 - number of events for every action for every labeling job. Sort table by labeling job to compare actions within one job, sort by action to compare jobs with each other
-- number of events for every user for every labeling job for every action
+- number of events for every user for every labeling job for every action (sort by different columns to see different perspectives like described above)
 
 <img src="https://i.imgur.com/HRCbXpl.png"/>
 
