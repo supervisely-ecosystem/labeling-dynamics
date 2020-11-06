@@ -60,6 +60,7 @@ Press `App settings` -> `Stop` button right in application session
 
 <img src="https://i.imgur.com/00d29VG.png"/>
 
+---
 
 or in app sessions table.
 
