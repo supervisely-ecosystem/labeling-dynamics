@@ -21,7 +21,7 @@
 
 ## Overview
 
-Supervisely stores full activity log almost for every action. This app uses activity log to restore all labeeling actions in team (table can be huge) and performs some basic aggregations shown on the screenshot below. The following types of events are considered as labeling actions:
+Supervisely stores full activity log almost for every action. This app uses activity log to restore all labeeling actions in team (table can be huge) and performs some basic aggregations shown on the screenshot below. All tables can be sorted by any column. The following types of events are considered as labeling actions:
 
 - `CREATE_FIGURE`
 - `UPDATE_FIGURE`
@@ -32,9 +32,13 @@ Supervisely stores full activity log almost for every action. This app uses acti
 - `DETACH_TAG`
 - `IMAGE_REVIEW_STATUS_UPDATED` 
 
+Following metrics are available (every metric is calculated for the selected date-time interval):
+- number of unique annotated images for every user
+- number of events for every labeling action for the entire team
+- number of labeling events that every user performed
+- number of events for every user for every action. If you sort this table by user you will see labeling actions for every user. If you will sort this table by labeling actions, then you can compare users within every action.
 
 <img src="https://i.imgur.com/HRCbXpl.png"/>
-
 
 
 ## Step 1. Add app from Ecosystem
@@ -46,7 +50,7 @@ Go to `Plugins & Apps` section and press `Run` button in front of the app.
 
 ## Step 3. Try different time intervals
 
-By default app shows maximum time interval that covers all labeling events in a team. You can change it and press `Apply Filter` button to see statistics for interested period of time. 
+By default app shows maximum time interval that covers all labeling events in a team. You can change it and press `Apply Filter` button to see statistics for the interested period of time. 
 
 ## Step 4. Stop app
 
