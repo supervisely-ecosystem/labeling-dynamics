@@ -13,6 +13,7 @@ my_app = sly.AppService()
 TEAM_ID = int(os.environ['context.teamId'])
 TEAM_ACTIVITY = None
 DEFAULT_ALL_TIME = None
+MEMBERS = None
 
 def calc_stats(api, task_id, activity_df, before_activity):
     global DEFAULT_ALL_TIME
@@ -21,12 +22,22 @@ def calc_stats(api, task_id, activity_df, before_activity):
 
     #user-uniq-images
     user_images_counter = defaultdict(int)
+    for member in MEMBERS:
+        user_images_counter[member.login] = 0
     data_after = json.loads(activity_df.to_json(orient='records'))
     for obj in data_after:
-        print(obj['index'])
         if obj['imageId'] not in used_ids:
             used_ids.add(obj['imageId'])
             user_images_counter[obj['user']] += 1
+
+    user_images_table_data = []
+    for idx, (login, count) in enumerate(user_images_counter.items()):
+        user_images_table_data.append([idx, login, count])
+
+    user_image_table = {
+        "columns": ["#", "user", "unique images count"],
+        "data": user_images_table_data
+    }
 
     actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
     actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
@@ -80,6 +91,7 @@ def calc_stats(api, task_id, activity_df, before_activity):
         fields.append({"field": "data.allTimeRange", "payload": DEFAULT_ALL_TIME})
 
     fields.extend([
+        {"field": "data.userImageTable", "payload": user_image_table},
         {"field": "data.actionsCount", "payload": _pd_to_sly_table(actions_count)},
         {"field": "data.userTotalActions", "payload": _pd_to_sly_table(user_total_actions)},
         {"field": "data.userActionCount", "payload": _pd_to_sly_table(user_action_count)},
@@ -91,8 +103,10 @@ def calc_stats(api, task_id, activity_df, before_activity):
 @my_app.callback("preprocessing")
 @sly.timeit
 def preprocessing(api: sly.Api, task_id, context, state, app_logger):
-    global TEAM_ACTIVITY
-    team = api.team.get_info_by_id(TEAM_ID)
+    global TEAM_ACTIVITY, MEMBERS
+
+    #team = api.team.get_info_by_id(TEAM_ID)
+    MEMBERS = api.user.get_team_members(TEAM_ID)
 
     labeling_actions = [
         aa.CREATE_FIGURE,
@@ -134,6 +148,7 @@ def stop(api: sly.Api, task_id, context, state, app_logger):
 def main():
     sly.logger.info("Input params", extra={"teamId": TEAM_ID})
     data = {
+        "userImageTable": {"columns": [], "data": []},
         "actionsCount": {"columns": [], "data": []},
         "userTotalActions": {"columns": [], "data": []},
         "userActionCount": {"columns": [], "data": []},

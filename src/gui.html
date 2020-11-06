@@ -29,7 +29,20 @@
 
     <sly-card
             class="mt15"
-            title="Labeling actions - Events Count"
+            title="Number of annotated unique images in a time interval"
+            subtitle="For example, if user has value 5 - it means that in selected time interval
+                      he was the first who performed labeling operations on 5 images (i.e. these 5 images were not labeled before).
+                      If another user will label these 5 images later, his counter will not be incremented."
+    >
+        <sly-table
+                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                :content="data.userImageTable"
+        ></sly-table>
+    </sly-card>
+
+    <sly-card
+            class="mt15"
+            title="Labeling actions - Events Count in a time interval"
             subtitle="Count number of events for every labeling action (Figure: Create / Update / Delete / Restore;
               Tag: Attach / Update / Detach; Image Review Status). If some actions don't have events (0 events)
               then such actions are not presented in the table">
@@ -41,7 +54,7 @@
 
     <sly-card
             class="mt15"
-            title="User - Events Count"
+            title="User - Events Count in a time interval"
             subtitle="How many labeling events every user performed">
         <sly-table
                 :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
@@ -51,7 +64,7 @@
 
     <sly-card
             class="mt15"
-            title="User - Action - Events Count"
+            title="User - Action - Events Count in a time interval"
             subtitle="Events count for every labeling action for every user"
     >
         <sly-table
@@ -62,7 +75,7 @@
 
     <sly-card
             class="mt15"
-            title="Labeling Job - Action - Events Count"
+            title="Labeling Job - Action - Events Count in a time interval"
             subtitle="Events count for every labeling action for every labeling job"
     >
         <sly-table
@@ -73,7 +86,7 @@
 
     <sly-card
             class="mt15"
-            title="User - Labeling Job - Action - Events Count"
+            title="User - Labeling Job - Action - Events Count in a time interval"
             subtitle="Events count for every labeling action for every labeling job"
     >
         <sly-table
