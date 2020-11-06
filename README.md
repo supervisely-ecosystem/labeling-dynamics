@@ -42,6 +42,9 @@ Following metrics are available (every metric is calculated for the selected dat
 
 <img src="https://i.imgur.com/HRCbXpl.png"/>
 
+Date-Time Range filter is the following:
+
+<img src="https://i.imgur.com/g7TwBPP.png"/>
 
 ## Step 1. Add app from Ecosystem
 Log in to the team, then go to `Ecosystem`->`Apps` page. Find app and press `Get` button. Now app is added to your team.
