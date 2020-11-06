@@ -8,7 +8,7 @@
   ],
   "description": "First Time True ratio shows how many items labeler annotated right the first time (i.e. reviewer accepted his work on first round).",
   "docker_image": "supervisely/base-py-sdk:6",
-  "main_script": "src/labeling_dynamics.py",
+  "main_script": "src/labeling_events_stats.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {},
   "gui_template": "src/gui.html",
