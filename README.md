@@ -22,7 +22,7 @@
 ## Overview
 
 
-## Step 1. (Optional) Add app to your team from Ecosystem
+## Step 1. Add app from Ecosystem
 Log in to the team, then go to `Ecosystem`->`Apps` page. Find app and press `Get` button. Now app is added to your team.
 
 ## Step 2. Run app
