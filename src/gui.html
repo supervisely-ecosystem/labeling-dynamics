@@ -1,5 +1,6 @@
 <div>
-    <div>
+    <div v-if="data.emptyActivity" style="color: red">There are no labeling actions yet</div>
+    <div v-if="!data.emptyActivity">
         <el-date-picker
                 v-model="state.dtRange"
                 type="datetimerange"

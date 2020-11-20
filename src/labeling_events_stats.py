@@ -15,6 +15,7 @@ TEAM_ACTIVITY = None
 DEFAULT_ALL_TIME = None
 MEMBERS = None
 
+
 def calc_stats(api, task_id, activity_df, before_activity):
     global DEFAULT_ALL_TIME
 
@@ -100,6 +101,7 @@ def calc_stats(api, task_id, activity_df, before_activity):
     ])
     api.task.set_fields(task_id, fields)
 
+
 @my_app.callback("preprocessing")
 @sly.timeit
 def preprocessing(api: sly.Api, task_id, context, state, app_logger):
@@ -119,6 +121,10 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         aa.IMAGE_REVIEW_STATUS_UPDATED
     ]
     activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
+    if len(activity_json) == 0:
+        api.task.set_field(task_id, "data.emptyActivity", True)
+        my_app.stop()
+
     TEAM_ACTIVITY = pd.DataFrame(activity_json)
     TEAM_ACTIVITY['date'] = pd.to_datetime(TEAM_ACTIVITY['date'])
     TEAM_ACTIVITY = TEAM_ACTIVITY.sort_values("date", ascending=True)
@@ -126,6 +132,7 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
 
     empty_df = pd.DataFrame(data=None, columns=TEAM_ACTIVITY.columns)
     calc_stats(api, task_id, TEAM_ACTIVITY, empty_df)
+
 
 @my_app.callback("apply_filter")
 @sly.timeit
@@ -140,10 +147,12 @@ def apply_filter(api: sly.Api, task_id, context, state, app_logger):
     before_activity = TEAM_ACTIVITY[TEAM_ACTIVITY['date'] < begin]
     calc_stats(api, task_id, filtered, before_activity)
 
+
 @my_app.callback("stop")
 @sly.timeit
 def stop(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "data.stopped", True)
+
 
 def main():
     sly.logger.info("Input params", extra={"teamId": TEAM_ID})
@@ -155,11 +164,12 @@ def main():
         "ljActionCount": {"columns": [], "data": []},
         "userLjActionCount": {"columns": [], "data": []},
         "allTimeRange": None,
-        "stopped": False
+        "stopped": False,
+        "emptyActivity": False,
     }
 
     state={
-        "dtRange": None
+        "dtRange": None,
     }
     initial_events = [{"state": None, "context": None, "command": "preprocessing"}]
 
@@ -167,7 +177,5 @@ def main():
     my_app.run(data=data, state=state, initial_events=initial_events)
 
 
-#@TODO: define labeling actions in readme
-#@TODO: disable button on stop
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
