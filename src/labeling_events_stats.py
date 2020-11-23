@@ -3,6 +3,7 @@ from dateutil import parser
 import datetime
 import pandas as pd
 import json
+import pprint
 from collections import defaultdict
 
 import supervisely_lib as sly
@@ -16,10 +17,11 @@ DEFAULT_ALL_TIME = None
 MEMBERS = None
 
 
-def calc_stats(api, task_id, activity_df, before_activity):
+def calc_stats(api, task_id, activity_df, before_activity, app_logger):
     global DEFAULT_ALL_TIME
 
     used_ids = set(before_activity['imageId'].unique().tolist())
+    app_logger.info("Before Number of unique images: {}".format(len(used_ids)))
 
     #user-uniq-images
     user_images_counter = defaultdict(int)
@@ -110,6 +112,12 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     #team = api.team.get_info_by_id(TEAM_ID)
     MEMBERS = api.user.get_team_members(TEAM_ID)
 
+    app_logger.info("Number of members in team: {}".format(len(MEMBERS)))
+
+    app_logger.info("Members info:")
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(MEMBERS)
+
     labeling_actions = [
         aa.CREATE_FIGURE,
         aa.UPDATE_FIGURE,
@@ -121,17 +129,23 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         aa.IMAGE_REVIEW_STATUS_UPDATED
     ]
     activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
+    app_logger.info("Activity events count: {}".format(len(activity_json)))
+
     if len(activity_json) == 0:
+        app_logger.info("There are no labeling events. App will be stopped.")
         api.task.set_field(task_id, "data.emptyActivity", True)
         my_app.stop()
 
     TEAM_ACTIVITY = pd.DataFrame(activity_json)
+    app_logger.info("First five activity events:")
+    print(TEAM_ACTIVITY[:5])
+
     TEAM_ACTIVITY['date'] = pd.to_datetime(TEAM_ACTIVITY['date'])
     TEAM_ACTIVITY = TEAM_ACTIVITY.sort_values("date", ascending=True)
     TEAM_ACTIVITY.reset_index(inplace=True)
 
     empty_df = pd.DataFrame(data=None, columns=TEAM_ACTIVITY.columns)
-    calc_stats(api, task_id, TEAM_ACTIVITY, empty_df)
+    calc_stats(api, task_id, TEAM_ACTIVITY, empty_df, app_logger)
 
 
 @my_app.callback("apply_filter")
@@ -145,7 +159,7 @@ def apply_filter(api: sly.Api, task_id, context, state, app_logger):
     end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
     filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] >= begin) & (TEAM_ACTIVITY['date'] <= end)]
     before_activity = TEAM_ACTIVITY[TEAM_ACTIVITY['date'] < begin]
-    calc_stats(api, task_id, filtered, before_activity)
+    calc_stats(api, task_id, filtered, before_activity, app_logger)
 
 
 @my_app.callback("stop")
