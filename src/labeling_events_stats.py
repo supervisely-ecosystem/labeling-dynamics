@@ -163,6 +163,8 @@ def apply_filter(api: sly.Api, task_id, context, state, app_logger):
         return
     begin = parser.parse(dt_range[0]) - datetime.timedelta(seconds=1)
     end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
+    app_logger.info("DT range", extra={"begin": begin, "end": end})
+
     filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] >= begin) & (TEAM_ACTIVITY['date'] <= end)]
     before_activity = TEAM_ACTIVITY[TEAM_ACTIVITY['date'] < begin]
     calc_stats(api, task_id, filtered, before_activity, app_logger)
