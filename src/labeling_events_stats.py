@@ -21,17 +21,23 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
     global DEFAULT_ALL_TIME
 
     used_ids = set(before_activity['imageId'].unique().tolist())
-    app_logger.info("Before Number of unique images: {}".format(len(used_ids)))
+    app_logger.info("Before - Number of unique images: {}".format(len(used_ids)))
 
     #user-uniq-images
     user_images_counter = defaultdict(int)
     for member in MEMBERS:
         user_images_counter[member.login] = 0
     data_after = json.loads(activity_df.to_json(orient='records'))
+    app_logger.info("After - Number of unique images: {}".format(len(data_after)))
+
     for obj in data_after:
         if obj['imageId'] not in used_ids:
             used_ids.add(obj['imageId'])
             user_images_counter[obj['user']] += 1
+
+    pp = pprint.PrettyPrinter(indent=4)
+    app_logger.info("User-images count".format(len(data_after)))
+    pp.pprint(user_images_counter)
 
     user_images_table_data = []
     for idx, (login, count) in enumerate(user_images_counter.items()):
