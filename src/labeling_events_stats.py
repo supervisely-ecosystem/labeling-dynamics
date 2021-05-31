@@ -23,7 +23,7 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
     used_ids = set(before_activity['imageId'].unique().tolist())
     app_logger.info("Before - Number of unique images: {}".format(len(used_ids)))
 
-    #user-uniq-images
+    # user-uniq-images
     user_images_counter = defaultdict(int)
     for member in MEMBERS:
         user_images_counter[member.login] = 0
@@ -51,8 +51,8 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
     actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
     actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
     actions_count.reset_index(inplace=True)
-    actions_count.rename(columns = {'index':'#'}, inplace=True)
-    #actions_count = actions_count.append(actions_count.sum(numeric_only=True), ignore_index=True)
+    actions_count.rename(columns={'index': '#'}, inplace=True)
+    # actions_count = actions_count.append(actions_count.sum(numeric_only=True), ignore_index=True)
     # print("---\n", actions_count)
 
     user_total_actions = activity_df.groupby("user")["user"].count().reset_index(name='count')
@@ -83,14 +83,15 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
     # print("---\n", start_period)
 
     end_period = activity_df["date"].max()
+
     # print("---\n", end_period)
 
     def _pd_to_sly_table(pd):
         return json.loads(pd.to_json(orient='split'))
 
     fields = []
-
-    if DEFAULT_ALL_TIME is None:
+    # if DEFAULT_ALL_TIME is None:
+    if not DEFAULT_ALL_TIME:
         # initialize widget state only on start
         DEFAULT_ALL_TIME = [
             start_period.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
@@ -115,7 +116,8 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
 def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     global TEAM_ACTIVITY, MEMBERS
 
-    #team = api.team.get_info_by_id(TEAM_ID)
+    team = api.team.get_info_by_id(TEAM_ID)
+
     MEMBERS = api.user.get_team_members(TEAM_ID)
 
     app_logger.info("Number of members in team: {}".format(len(MEMBERS)))
@@ -123,7 +125,6 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     app_logger.info("Members info:")
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(MEMBERS)
-
     labeling_actions = [
         aa.CREATE_FIGURE,
         aa.UPDATE_FIGURE,
@@ -134,17 +135,21 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         aa.DETACH_TAG,
         aa.IMAGE_REVIEW_STATUS_UPDATED
     ]
-    activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
-    app_logger.info("Activity events count: {}".format(len(activity_json)))
+    # activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
+    activity_json = []
+    for uid in [1, 6, 276]:
+        sample = api.team.get_activity(TEAM_ID, filter_user_id=uid, filter_actions=labeling_actions)
+        activity_json.extend(sample)
 
+    app_logger.info("Activity events count: {}".format(len(activity_json)))
     if len(activity_json) == 0:
         app_logger.info("There are no labeling events. App will be stopped.")
         api.task.set_field(task_id, "data.emptyActivity", True)
         my_app.stop()
+        return
 
     TEAM_ACTIVITY = pd.DataFrame(activity_json)
     app_logger.info("First five activity events:")
-    print(TEAM_ACTIVITY[:5])
 
     TEAM_ACTIVITY['date'] = pd.to_datetime(TEAM_ACTIVITY['date'])
     TEAM_ACTIVITY = TEAM_ACTIVITY.sort_values("date", ascending=True)
@@ -190,8 +195,8 @@ def main():
         "emptyActivity": False,
     }
 
-    state={
-        "dtRange": None,
+    state = {
+        "dtRange": []  # None,
     }
     initial_events = [{"state": None, "context": None, "command": "preprocessing"}]
 
