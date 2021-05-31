@@ -37,6 +37,7 @@
                       If another user will label these 5 images later, his counter will not be incremented."
     >
         <sly-table
+                v-loading="data.processing"
                 :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
                 :content="data.userImageTable"
         ></sly-table>
@@ -49,6 +50,7 @@
               Tag: Attach / Update / Detach; Image Review Status). If some actions don't have events (0 events)
               then such actions are not presented in the table">
         <sly-table
+                v-loading="data.processing"
                 :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
                 :content="data.actionsCount"
         ></sly-table>
@@ -59,6 +61,7 @@
             title="User - Events Count in a time interval"
             subtitle="How many labeling events every user performed">
         <sly-table
+                v-loading="data.processing"
                 :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
                 :content="data.userTotalActions"
         ></sly-table>
@@ -70,6 +73,7 @@
             subtitle="Events count for every labeling action for every user"
     >
         <sly-table
+                v-loading="data.processing"
                 :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
                 :content="data.userActionCount"
         ></sly-table>
@@ -81,6 +85,7 @@
             subtitle="Events count for every labeling action for every labeling job"
     >
         <sly-table
+                v-loading="data.processing"
                 :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
                 :content="data.ljActionCount"
         ></sly-table>
@@ -92,6 +97,7 @@
             subtitle="Events count for every labeling action for every labeling job"
     >
         <sly-table
+                v-loading="data.processing"
                 :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
                 :content="data.userLjActionCount"
         ></sly-table>

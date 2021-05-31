@@ -116,6 +116,8 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
 def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     global TEAM_ACTIVITY, MEMBERS
 
+    api.task.set_field(task_id, "data.processing", True)
+
     #team = api.team.get_info_by_id(TEAM_ID)
     MEMBERS = api.user.get_team_members(TEAM_ID)
 
@@ -154,6 +156,7 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
 
     empty_df = pd.DataFrame(data=None, columns=TEAM_ACTIVITY.columns)
     calc_stats(api, task_id, TEAM_ACTIVITY, empty_df, app_logger)
+    api.task.set_field(task_id, "data.processing", False)
 
 
 @my_app.callback("apply_filter")
@@ -190,6 +193,7 @@ def main():
         "allTimeRange": None,
         "stopped": False,
         "emptyActivity": False,
+        "initialProcessing": True
     }
 
     state={
