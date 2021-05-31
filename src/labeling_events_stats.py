@@ -107,6 +107,7 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
         {"field": "data.ljActionCount", "payload": _pd_to_sly_table(lj_actions_count)},
         {"field": "data.userLjActionCount", "payload": _pd_to_sly_table(user_lj_actions_count)},
     ])
+
     api.task.set_fields(task_id, fields)
 
 
@@ -141,6 +142,7 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         app_logger.info("There are no labeling events. App will be stopped.")
         api.task.set_field(task_id, "data.emptyActivity", True)
         my_app.stop()
+        return
 
     TEAM_ACTIVITY = pd.DataFrame(activity_json)
     app_logger.info("First five activity events:")
