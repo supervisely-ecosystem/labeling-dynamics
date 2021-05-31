@@ -5,7 +5,6 @@ import pandas as pd
 import json
 import pprint
 from collections import defaultdict
-from datetime import datetime
 
 import supervisely_lib as sly
 from supervisely_lib.api.team_api import ActivityAction as aa
@@ -195,8 +194,8 @@ def main():
 
     state={
         "dtRange": [
-            datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-            datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
+            datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
         ],
     }
     initial_events = [{"state": None, "context": None, "command": "preprocessing"}]
