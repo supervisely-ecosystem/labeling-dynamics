@@ -193,7 +193,7 @@ def main():
         "allTimeRange": None,
         "stopped": False,
         "emptyActivity": False,
-        "initialProcessing": True
+        "processing": False
     }
 
     state={
