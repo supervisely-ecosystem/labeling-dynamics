@@ -1,6 +1,7 @@
 <div>
     <div v-if="data.emptyActivity" style="color: red">There are no labeling actions yet</div>
-    <div v-if="!data.emptyActivity">
+    <div class="mt10" v-if="!state.dtRange" style="color: red">DataTime range is not defined. Please, contact support.</div>
+    <div v-if="!data.emptyActivity && state.dtRange">
         <el-date-picker
                 v-model="state.dtRange"
                 type="datetimerange"
