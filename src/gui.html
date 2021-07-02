@@ -1,7 +1,11 @@
 <div>
     <div v-if="data.emptyActivity" style="color: red">There are no labeling actions yet</div>
     <div class="mt10" v-if="!state.dtRange" style="color: red">DataTime range is not defined. Please, contact support.</div>
-    <div v-if="!data.emptyActivity && state.dtRange">
+    <div v-if="data.progress" class="mt10">
+        <div style="color: #20a0ff">{{data.progress}}: {{data.progressCurrent}} / {{data.progressTotal}}</div>
+        <el-progress :percentage="data.progressPercent"></el-progress>
+    </div>
+    <div v-if="!data.emptyActivity && state.dtRange" class="mt10">
         <el-date-picker
                 v-model="state.dtRange"
                 type="datetimerange"
@@ -17,6 +21,7 @@
                 style="margin-left: 15px"
                 type="primary"
                 @click="command('apply_filter')"
+                :loading="data.processing"
                 :disabled="data.stopped || state.dtRange[0] === null || state.dtRange[1] === null">
             <i class="zmdi zmdi-calendar-alt" style="margin-right: 5px;"></i> Apply filter
         </el-button>

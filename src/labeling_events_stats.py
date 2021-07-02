@@ -1,9 +1,12 @@
 import os
+import time
+
 from dateutil import parser
 import datetime
 import pandas as pd
 import json
 import pprint
+import math
 from collections import defaultdict
 
 import supervisely_lib as sly
@@ -15,6 +18,23 @@ TEAM_ID = int(os.environ['context.teamId'])
 TEAM_ACTIVITY = None
 DEFAULT_ALL_TIME = None
 MEMBERS = None
+
+
+def init_progress(data):
+    data[f"progress"] = None
+    data[f"progressCurrent"] = None
+    data[f"progressTotal"] = None
+    data[f"progressPercent"] = None
+
+
+def reset_progress():
+    fields = [
+        {"field": f"data.progress", "payload": None},
+        {"field": f"data.progressCurrent", "payload": None},
+        {"field": f"data.progressTotal", "payload": None},
+        {"field": f"data.progressPercent", "payload": None},
+    ]
+    my_app.public_api.app.set_fields(my_app.task_id, fields)
 
 
 def calc_stats(api, task_id, activity_df, before_activity, app_logger):
@@ -137,7 +157,30 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         aa.DETACH_TAG,
         aa.IMAGE_REVIEW_STATUS_UPDATED
     ]
-    activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
+
+    def _update_progress_ui(progress: sly.Progress, force=False):
+        if progress.need_report() or force is True:
+            fields = [
+                {"field": f"data.progress", "payload": progress.message},
+                {"field": f"data.progressCurrent", "payload": progress.current_label},
+                {"field": f"data.progressTotal", "payload": progress.total_label},
+                {"field": f"data.progressPercent", "payload": math.floor(progress.current * 100 / progress.total)},
+            ]
+            my_app.public_api.app.set_fields(my_app.task_id, fields)
+            progress.report_progress()
+
+    progress = sly.Progress("Downloading activity events", 1)
+    _update_progress_ui(progress, force=True)
+
+    def log_progress(received, total):
+        if progress.total == 1:
+            progress.set(received, total)
+        else:
+            progress.set_current_value(received, report=False)
+        _update_progress_ui(progress)
+
+    activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions, progress_cb=log_progress)
+    reset_progress()
     app_logger.info("Activity events count: {}".format(len(activity_json)))
 
     if len(activity_json) == 0:
@@ -193,7 +236,7 @@ def main():
         "allTimeRange": None,
         "stopped": False,
         "emptyActivity": False,
-        "processing": False
+        "processing": False,
     }
 
     state={
@@ -204,10 +247,11 @@ def main():
     }
     initial_events = [{"state": None, "context": None, "command": "preprocessing"}]
 
+    init_progress(data)
+
     # Run application service
     my_app.run(data=data, state=state, initial_events=initial_events)
 
 
-#@TODO: add progress bar on initial loading of events
 if __name__ == "__main__":
     sly.main_wrapper("main", main)
