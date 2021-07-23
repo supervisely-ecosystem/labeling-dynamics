@@ -134,18 +134,25 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
 @my_app.callback("preprocessing")
 @sly.timeit
 def preprocessing(api: sly.Api, task_id, context, state, app_logger):
-    global TEAM_ACTIVITY, MEMBERS
+    global TEAM_ACTIVITY
 
-    api.task.set_field(task_id, "data.processing", True)
+    dt_range = state["dtRange"]
+    begin = parser.parse(dt_range[0]) - datetime.timedelta(seconds=1)
+    end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
 
-    #team = api.team.get_info_by_id(TEAM_ID)
-    MEMBERS = api.user.get_team_members(TEAM_ID)
+    fields = [
+        {"field": "data.userImageTable", "payload": {"columns": [], "data": []}},
+        {"field": "data.actionsCount", "payload": {"columns": [], "data": []}},
+        {"field": "data.userTotalActions", "payload": {"columns": [], "data": []}},
+        {"field": "data.userActionCount", "payload": {"columns": [], "data": []}},
+        {"field": "data.ljActionCount", "payload": {"columns": [], "data": []}},
+        {"field": "data.userLjActionCount", "payload": {"columns": [], "data": []}},
+        {"field": "data.userLjActionCount", "payload": {"columns": [], "data": []}},
 
-    app_logger.info("Number of members in team: {}".format(len(MEMBERS)))
-
-    app_logger.info("Members info:")
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(MEMBERS)
+        {"field": "data.processing", "payload": True},
+        {"field": "data.emptyActivity", "payload": False},
+    ]
+    api.task.set_fields(task_id, fields)
 
     labeling_actions = [
         aa.CREATE_FIGURE,
@@ -164,8 +171,11 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
                 {"field": f"data.progress", "payload": progress.message},
                 {"field": f"data.progressCurrent", "payload": progress.current_label},
                 {"field": f"data.progressTotal", "payload": progress.total_label},
-                {"field": f"data.progressPercent", "payload": math.floor(progress.current * 100 / progress.total)},
             ]
+            if progress.total != 0:
+                fields.append(
+                    {"field": f"data.progressPercent", "payload": math.floor(progress.current * 100 / progress.total)}
+                )
             my_app.public_api.app.set_fields(my_app.task_id, fields)
             progress.report_progress()
 
@@ -179,14 +189,21 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
             progress.set_current_value(received, report=False)
         _update_progress_ui(progress)
 
-    activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions, progress_cb=log_progress)
+    activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions, progress_cb=log_progress,
+                                          start_date=begin, end_date=end)
     reset_progress()
     app_logger.info("Activity events count: {}".format(len(activity_json)))
 
     if len(activity_json) == 0:
         app_logger.info("There are no labeling events. App will be stopped.")
         api.task.set_field(task_id, "data.emptyActivity", True)
-        my_app.stop()
+
+        fields = [
+            {"field": "data.progress", "payload": False},
+            {"field": "data.emptyActivity", "payload": True},
+            {"field": "data.processing", "payload": False},
+        ]
+        api.task.set_fields(task_id, fields)
         return
 
     TEAM_ACTIVITY = pd.DataFrame(activity_json)
@@ -202,20 +219,20 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     api.task.set_field(task_id, "data.processing", False)
 
 
-@my_app.callback("apply_filter")
-@sly.timeit
-def apply_filter(api: sly.Api, task_id, context, state, app_logger):
-    dt_range = state["dtRange"]
-    if dt_range[0] is None or dt_range[1] is None:
-        app_logger.warn("DateTime range is not defined")
-        return
-    begin = parser.parse(dt_range[0]) - datetime.timedelta(seconds=1)
-    end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
-    app_logger.info("DT range", extra={"begin": begin, "end": end})
-
-    filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] >= begin) & (TEAM_ACTIVITY['date'] <= end)]
-    before_activity = TEAM_ACTIVITY[TEAM_ACTIVITY['date'] < begin]
-    calc_stats(api, task_id, filtered, before_activity, app_logger)
+# @my_app.callback("apply_filter")
+# @sly.timeit
+# def apply_filter(api: sly.Api, task_id, context, state, app_logger):
+    # dt_range = state["dtRange"]
+    # if dt_range[0] is None or dt_range[1] is None:
+    #     app_logger.warn("DateTime range is not defined")
+    #     return
+    # begin = parser.parse(dt_range[0]) - datetime.timedelta(seconds=1)
+    # end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
+    # app_logger.info("DT range", extra={"begin": begin, "end": end})
+    #
+    # filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] >= begin) & (TEAM_ACTIVITY['date'] <= end)]
+    # before_activity = TEAM_ACTIVITY[TEAM_ACTIVITY['date'] < begin]
+    # calc_stats(api, task_id, filtered, before_activity, app_logger)
 
 
 @my_app.callback("stop")
@@ -239,15 +256,26 @@ def main():
         "processing": False,
     }
 
-    state={
+    dt_end = datetime.datetime.now()
+    dt_start = dt_end - datetime.timedelta(days=1)
+
+    state = {
         "dtRange": [
-            datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z'),
-            datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
+            dt_start.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            dt_end.strftime('%Y-%m-%dT%H:%M:%S.000Z')
         ],
     }
-    initial_events = [{"state": None, "context": None, "command": "preprocessing"}]
+    initial_events = [{"state": state, "context": None, "command": "preprocessing"}]
 
     init_progress(data)
+
+    global MEMBERS
+    MEMBERS = my_app.public_api.user.get_team_members(TEAM_ID)
+    sly.logger.info("Number of members in team: {}".format(len(MEMBERS)))
+    sly.logger.info("Members info:")
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(MEMBERS)
+
 
     # Run application service
     my_app.run(data=data, state=state, initial_events=initial_events)

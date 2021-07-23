@@ -1,11 +1,13 @@
 <div>
-    <div v-if="data.emptyActivity" style="color: red">There are no labeling actions yet</div>
-    <div class="mt10" v-if="!state.dtRange" style="color: red">DataTime range is not defined. Please, contact support.</div>
+    <div class="mt10" v-if="!state.dtRange" style="color: red">
+        DataTime range is not defined. Please, contact support.
+    </div>
     <div v-if="data.progress" class="mt10">
         <div style="color: #20a0ff">{{data.progress}}: {{data.progressCurrent}} / {{data.progressTotal}}</div>
         <el-progress :percentage="data.progressPercent"></el-progress>
     </div>
-    <div v-if="!data.emptyActivity && state.dtRange" class="mt10">
+    <!--    !data.emptyActivity && -->
+    <div v-if="state.dtRange" class="mt10">
         <el-date-picker
                 v-model="state.dtRange"
                 type="datetimerange"
@@ -20,7 +22,7 @@
         <el-button
                 style="margin-left: 15px"
                 type="primary"
-                @click="command('apply_filter')"
+                @click="command('preprocessing')"
                 :loading="data.processing"
                 :disabled="data.stopped || state.dtRange[0] === null || state.dtRange[1] === null">
             <i class="zmdi zmdi-calendar-alt" style="margin-right: 5px;"></i> Apply filter
@@ -32,79 +34,83 @@
             Please, define date-time range to apply filter
         </span>
     </div>
+    <div v-if="data.emptyActivity" style="color: red" class="mt10">
+        There are no labeling actions for the selected period: {{state.dtRange}}
+    </div>
 
-
-    <sly-card
-            class="mt15"
-            title="Number of annotated unique images in a time interval"
-            subtitle="For example, if user has value 5 - it means that in selected time interval
+    <div v-else>
+        <sly-card
+                class="mt15"
+                title="Number of annotated unique images in a time interval"
+                subtitle="For example, if user has value 5 - it means that in selected time interval
                       he was the first who performed labeling operations on 5 images (i.e. these 5 images were not labeled before).
                       If another user will label these 5 images later, his counter will not be incremented."
-    >
-        <sly-table
-                v-loading="data.processing"
-                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
-                :content="data.userImageTable"
-        ></sly-table>
-    </sly-card>
+        >
+            <sly-table
+                    v-loading="data.processing"
+                    :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                    :content="data.userImageTable"
+            ></sly-table>
+        </sly-card>
 
-    <sly-card
-            class="mt15"
-            title="Labeling actions - Events Count in a time interval"
-            subtitle="Count number of events for every labeling action (Figure: Create / Update / Delete / Restore;
+        <sly-card
+                class="mt15"
+                title="Labeling actions - Events Count in a time interval"
+                subtitle="Count number of events for every labeling action (Figure: Create / Update / Delete / Restore;
               Tag: Attach / Update / Detach; Image Review Status). If some actions don't have events (0 events)
               then such actions are not presented in the table">
-        <sly-table
-                v-loading="data.processing"
-                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
-                :content="data.actionsCount"
-        ></sly-table>
-    </sly-card>
+            <sly-table
+                    v-loading="data.processing"
+                    :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                    :content="data.actionsCount"
+            ></sly-table>
+        </sly-card>
 
-    <sly-card
-            class="mt15"
-            title="User - Events Count in a time interval"
-            subtitle="How many labeling events every user performed">
-        <sly-table
-                v-loading="data.processing"
-                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
-                :content="data.userTotalActions"
-        ></sly-table>
-    </sly-card>
+        <sly-card
+                class="mt15"
+                title="User - Events Count in a time interval"
+                subtitle="How many labeling events every user performed">
+            <sly-table
+                    v-loading="data.processing"
+                    :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                    :content="data.userTotalActions"
+            ></sly-table>
+        </sly-card>
 
-    <sly-card
-            class="mt15"
-            title="User - Action - Events Count in a time interval"
-            subtitle="Events count for every labeling action for every user"
-    >
-        <sly-table
-                v-loading="data.processing"
-                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
-                :content="data.userActionCount"
-        ></sly-table>
-    </sly-card>
+        <sly-card
+                class="mt15"
+                title="User - Action - Events Count in a time interval"
+                subtitle="Events count for every labeling action for every user"
+        >
+            <sly-table
+                    v-loading="data.processing"
+                    :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                    :content="data.userActionCount"
+            ></sly-table>
+        </sly-card>
 
-    <sly-card
-            class="mt15"
-            title="Labeling Job - Action - Events Count in a time interval"
-            subtitle="Events count for every labeling action for every labeling job"
-    >
-        <sly-table
-                v-loading="data.processing"
-                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
-                :content="data.ljActionCount"
-        ></sly-table>
-    </sly-card>
+        <sly-card
+                class="mt15"
+                title="Labeling Job - Action - Events Count in a time interval"
+                subtitle="Events count for every labeling action for every labeling job"
+        >
+            <sly-table
+                    v-loading="data.processing"
+                    :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                    :content="data.ljActionCount"
+            ></sly-table>
+        </sly-card>
 
-    <sly-card
-            class="mt15"
-            title="User - Labeling Job - Action - Events Count in a time interval"
-            subtitle="Events count for every labeling action for every labeling job"
-    >
-        <sly-table
-                v-loading="data.processing"
-                :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
-                :content="data.userLjActionCount"
-        ></sly-table>
-    </sly-card>
+        <sly-card
+                class="mt15"
+                title="User - Labeling Job - Action - Events Count in a time interval"
+                subtitle="Events count for every labeling action for every labeling job"
+        >
+            <sly-table
+                    v-loading="data.processing"
+                    :options="{perPage: 40, pageSizes: [15, 30, 40, 100]}"
+                    :content="data.userLjActionCount"
+            ></sly-table>
+        </sly-card>
+    </div>
 </div>
