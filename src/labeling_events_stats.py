@@ -15,13 +15,17 @@ TEAM_ID = int(os.environ['context.teamId'])
 TEAM_ACTIVITY = None
 DEFAULT_ALL_TIME = None
 MEMBERS = None
+labeling_actions = None
 
 
-def calc_stats(api, task_id, activity_df, before_activity, app_logger):
+def calc_stats(api, task_id, activity_df, app_logger):
     global DEFAULT_ALL_TIME
 
-    used_ids = set(before_activity['imageId'].unique().tolist())
-    app_logger.info("Before - Number of unique images: {}".format(len(used_ids)))
+    from datetime import datetime, timedelta
+
+    #used_ids = set(before_activity['imageId'].unique().tolist())
+    used_ids = set()
+    #app_logger.info("Before - Number of unique images: {}".format(len(used_ids)))
 
     #user-uniq-images
     user_images_counter = defaultdict(int)
@@ -48,42 +52,56 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
         "data": user_images_table_data
     }
 
-    actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
-    actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
-    actions_count.reset_index(inplace=True)
-    actions_count.rename(columns = {'index':'#'}, inplace=True)
-    #actions_count = actions_count.append(actions_count.sum(numeric_only=True), ignore_index=True)
-    # print("---\n", actions_count)
+    if len(activity_df) == 0:
+        actions_count = {"#", "action", "count"}
+        user_total_actions = {"#", "user", "count"}
+        user_action_count = {"#", "user", "action count"}
+        lj_actions_count = {"#", "job", "action", "count"}
+        user_lj_actions_count = {"#", "user", "job", "action", "count"}
+        start_period = datetime.today() - timedelta(days=30)
+        end_period = datetime.today()
+        DEFAULT_ALL_TIME = [
+            start_period.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            end_period.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        ]
 
-    user_total_actions = activity_df.groupby("user")["user"].count().reset_index(name='count')
-    user_total_actions = user_total_actions.sort_values("count", ascending=False)
-    user_total_actions.reset_index(inplace=True)
-    user_total_actions.rename(columns={'index': '#'}, inplace=True)
-    # print("---\n", user_total_actions)
+    else:
+        actions_count = activity_df.groupby("action")["action"].count().reset_index(name='count')
+        actions_count = actions_count.sort_values("count", ignore_index=True, ascending=False)
+        actions_count.reset_index(inplace=True)
+        actions_count.rename(columns = {'index':'#'}, inplace=True)
+        #actions_count = actions_count.append(actions_count.sum(numeric_only=True), ignore_index=True)
+        # print("---\n", actions_count)
 
-    user_action_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
-    user_action_count = user_action_count.sort_values(["user", "count"], ignore_index=True, ascending=(True, False))
-    user_action_count.reset_index(inplace=True)
-    user_action_count.rename(columns={'index': '#'}, inplace=True)
-    # print("---\n", user_action_count)
+        user_total_actions = activity_df.groupby("user")["user"].count().reset_index(name='count')
+        user_total_actions = user_total_actions.sort_values("count", ascending=False)
+        user_total_actions.reset_index(inplace=True)
+        user_total_actions.rename(columns={'index': '#'}, inplace=True)
+        # print("---\n", user_total_actions)
 
-    lj_actions_count = activity_df.groupby(["job", "action"])["action"].count().reset_index(name='count')
-    lj_actions_count = lj_actions_count.sort_values(["job", "count"], ignore_index=True, ascending=(True, False))
-    lj_actions_count.reset_index(inplace=True)
-    lj_actions_count.rename(columns={'index': '#'}, inplace=True)
-    # print("---\n", lj_actions_count)
+        user_action_count = activity_df.groupby(["user", "action"])["action"].count().reset_index(name='count')
+        user_action_count = user_action_count.sort_values(["user", "count"], ignore_index=True, ascending=(True, False))
+        user_action_count.reset_index(inplace=True)
+        user_action_count.rename(columns={'index': '#'}, inplace=True)
+        # print("---\n", user_action_count)
 
-    user_lj_actions_count = activity_df.groupby(["user", "job", "action"])["action"].count().reset_index(name='count')
-    user_lj_actions_count = user_lj_actions_count.sort_values(["user", "job", "count"], ascending=(True, True, False))
-    user_lj_actions_count.reset_index(inplace=True)
-    user_lj_actions_count.rename(columns={'index': '#'}, inplace=True)
-    # print("---\n", user_lj_actions_count)
+        lj_actions_count = activity_df.groupby(["job", "action"])["action"].count().reset_index(name='count')
+        lj_actions_count = lj_actions_count.sort_values(["job", "count"], ignore_index=True, ascending=(True, False))
+        lj_actions_count.reset_index(inplace=True)
+        lj_actions_count.rename(columns={'index': '#'}, inplace=True)
+        # print("---\n", lj_actions_count)
 
-    start_period = activity_df["date"].min()
-    # print("---\n", start_period)
+        user_lj_actions_count = activity_df.groupby(["user", "job", "action"])["action"].count().reset_index(name='count')
+        user_lj_actions_count = user_lj_actions_count.sort_values(["user", "job", "count"], ascending=(True, True, False))
+        user_lj_actions_count.reset_index(inplace=True)
+        user_lj_actions_count.rename(columns={'index': '#'}, inplace=True)
+        # print("---\n", user_lj_actions_count)
 
-    end_period = activity_df["date"].max()
-    # print("---\n", end_period)
+        start_period = activity_df["date"].min()
+        # print("---\n", start_period)
+
+        end_period = activity_df["date"].max()
+        # print("---\n", end_period)
 
     def _pd_to_sly_table(pd):
         return json.loads(pd.to_json(orient='split'))
@@ -114,7 +132,7 @@ def calc_stats(api, task_id, activity_df, before_activity, app_logger):
 @my_app.callback("preprocessing")
 @sly.timeit
 def preprocessing(api: sly.Api, task_id, context, state, app_logger):
-    global TEAM_ACTIVITY, MEMBERS
+    global TEAM_ACTIVITY, MEMBERS, labeling_actions
 
     #team = api.team.get_info_by_id(TEAM_ID)
     MEMBERS = api.user.get_team_members(TEAM_ID)
@@ -135,6 +153,7 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
         aa.DETACH_TAG,
         aa.IMAGE_REVIEW_STATUS_UPDATED
     ]
+
     activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions)
     app_logger.info("Activity events count: {}".format(len(activity_json)))
 
@@ -152,24 +171,29 @@ def preprocessing(api: sly.Api, task_id, context, state, app_logger):
     TEAM_ACTIVITY = TEAM_ACTIVITY.sort_values("date", ascending=True)
     TEAM_ACTIVITY.reset_index(inplace=True)
 
-    empty_df = pd.DataFrame(data=None, columns=TEAM_ACTIVITY.columns)
-    calc_stats(api, task_id, TEAM_ACTIVITY, empty_df, app_logger)
+    #empty_df = pd.DataFrame(data=None, columns=TEAM_ACTIVITY.columns)
+    calc_stats(api, task_id, TEAM_ACTIVITY, app_logger)
 
 
 @my_app.callback("apply_filter")
 @sly.timeit
 def apply_filter(api: sly.Api, task_id, context, state, app_logger):
+    global labeling_actions
     dt_range = state["dtRange"]
     if dt_range[0] is None or dt_range[1] is None:
         app_logger.warn("DateTime range is not defined")
         return
-    begin = parser.parse(dt_range[0]) - datetime.timedelta(seconds=1)
-    end = parser.parse(dt_range[1]) + datetime.timedelta(seconds=1)
-    app_logger.info("DT range", extra={"begin": begin, "end": end})
 
-    filtered = TEAM_ACTIVITY[(TEAM_ACTIVITY['date'] >= begin) & (TEAM_ACTIVITY['date'] <= end)]
-    before_activity = TEAM_ACTIVITY[TEAM_ACTIVITY['date'] < begin]
-    calc_stats(api, task_id, filtered, before_activity, app_logger)
+    begin = dt_range[0]
+    end = dt_range[1]
+    app_logger.info("DT range", extra={"begin": dt_range[0], "end": dt_range[1]})
+
+    activity_json = api.team.get_activity(TEAM_ID, filter_actions=labeling_actions, start_date=begin, end_date=end)
+    app_logger.info("Activity events count: {}".format(len(activity_json)))
+
+    filtered = pd.DataFrame(activity_json)
+
+    calc_stats(api, task_id, filtered, app_logger)
 
 
 @my_app.callback("stop")
