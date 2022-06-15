@@ -2,9 +2,8 @@
   "name": "Labeling Events Stats",
   "type": "app",
   "categories": [
-    "report",
-    "labeling job",
-    "member"
+    "collaboration",
+    "statistics"
   ],
   "description": "Total number of labeling actions and annotated unique images in a time interval",
   "docker_image": "supervisely/base-py-sdk:6.1.91",
