@@ -3,7 +3,8 @@
   "type": "app",
   "categories": [
     "collaboration",
-    "statistics"
+    "statistics",
+    "visualization-stats"
   ],
   "description": "Total number of labeling actions and annotated unique images in a time interval",
   "docker_image": "supervisely/base-py-sdk:6.1.91",
