@@ -1,6 +1,6 @@
 <div align="center" markdown>
 
-<img src="https://i.imgur.com/Z112V53.png"/>
+<img src="https://user-images.githubusercontent.com/48245050/182381489-d8bbb1d6-c17f-40c9-a22c-e764dfe97ccb.png">
 
 # Labeling Events Stats
 
