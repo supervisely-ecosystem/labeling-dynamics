@@ -39,11 +39,11 @@ Following metrics are available (every metric is calculated for the selected dat
 - number of events for every action for every labeling job. Sort table by labeling job to compare actions within one job, sort by action to compare jobs with each other
 - number of events for every user for every labeling job for every action (sort by different columns to see different perspectives like described above)
 
-<img src="https://i.imgur.com/HRCbXpl.png"/>
+<img src="media/ov1.png"/>
 
 Date-Time Range filter is the following:
 
-<img src="https://i.imgur.com/g7TwBPP.png"/>
+<img src="media/ov2.png"/>
 
 ## Step 1. Add app from Ecosystem
 Log in to the team, then go to `Ecosystem`->`Apps` page. Find app and press `Get` button. Now app is added to your team.
@@ -60,17 +60,17 @@ By default app shows maximum time interval that covers all labeling events in a 
 
 Press `App settings` -> `Stop` button right in application session
 
-<img src="https://i.imgur.com/00d29VG.png"/>
+<img src="media/htr4.png"/>
 
 ---
 
 or in app sessions table.
 
-<img src="https://i.imgur.com/o6ZsNPX.png"/>
+<img src="media/htr4a.png"/>
 
 
 ## History of runs
 
 To see history of runs go to `Apps` page, click to applications sessions. In front of every session you can see buttons (`View` and `Logs`). Press `View` button to open stopped application session in `Read Only` mode.
 
-<img src="https://i.imgur.com/EVaMydM.png"/>
+<img src="media/h1.png"/>
